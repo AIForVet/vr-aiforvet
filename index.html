@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="sr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Quest 3 AR & Web Vision - AI Object Detection</title>
+
+  <!-- Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+  <!-- TensorFlow.js + coco-ssd -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    body {
+      background: #0d0f18;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #fff;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Video feed za kameru */
+    #camera-feed {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      display: none;
+    }
+
+    /* Skriveni video za TF.js procesiranje ako je WebXR aktivan */
+    #tfvideo {
+      display: none;
+    }
+
+    /* Three.js canvas */
+    #three-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: auto;
+    }
+
+    /* 2D Canvas za brzu i oštru detekciju na desktopu */
+    #detection-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+      display: none;
+    }
+
+    /* Welcome Modal Overlay */
+    #welcome-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(16, 20, 36, 0.88) 0%, rgba(8, 10, 20, 0.98) 100%);
+      backdrop-filter: blur(16px);
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      transition: opacity 0.4s ease, visibility 0.4s;
+    }
+
+    #welcome-content {
+      max-width: 620px;
+      width: 100%;
+      padding: 36px 32px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      text-align: center;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7);
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      background: rgba(0, 204, 68, 0.15);
+      border: 1px solid rgba(0, 204, 68, 0.4);
+      color: #34d399;
+    }
+
+    .badge-pill.desktop {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #60a5fa;
+    }
+
+    #welcome-content h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    #welcome-content p {
+      font-size: 16px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 22px;
+    }
+
+    .vr-warning {
+      background: rgba(255, 170, 0, 0.08);
+      border: 1px solid rgba(255, 170, 0, 0.28);
+      padding: 16px 20px;
+      border-radius: 14px;
+      margin-bottom: 26px;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #fbd38d;
+      text-align: left;
+    }
+
+    .vr-warning strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #fbbf24;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.8px;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-primary {
+      width: 100%;
+      max-width: 380px;
+      padding: 16px 28px;
+      font-size: 17px;
+      background: linear-gradient(135deg, #00CC44 0%, #009933 100%);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.2s ease;
+      box-shadow: 0 10px 25px -5px rgba(0, 204, 68, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px -5px rgba(0, 204, 68, 0.6);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      max-width: 380px;
+      padding: 12px 24px;
+      font-size: 15px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #e2e8f0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-1px);
+    }
+
+    /* Bottom HUD UI */
+    #ui {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      gap: 12px;
+      background: rgba(10, 14, 26, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    #ui.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .hud-left {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .hud-pill {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f1f5f9;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hud-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .hud-btn {
+      padding: 10px 18px;
+      font-size: 14px;
+      background: #00CC44;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+
+    .hud-btn:hover {
+      background: #00aa33;
+    }
+
+    .hud-btn-alt {
+      padding: 10px 14px;
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .hud-btn-alt:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Uputstvo za interakciju */
+    #tip-overlay {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      z-index: 90;
+      display: none;
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      #ui {
+        flex-direction: column;
+        align-items: stretch;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        padding: 12px;
+      }
+      .hud-left {
+        justify-content: center;
+      }
+      .hud-right {
+        justify-content: stretch;
+      }
+      .hud-btn, .hud-btn-alt {
+        flex: 1;
+        text-align: center;
+      }
+      #welcome-content {
+        padding: 24px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Video feed element -->
+  <video id="camera-feed" playsinline muted autoplay></video>
+  <video id="tfvideo" playsinline muted autoplay></video>
+
+  <!-- Canvas za 2D bounding boxeve na desktopu -->
+  <canvas id="detection-overlay"></canvas>
+
+  <!-- Three.js Canvas -->
+  <canvas id="three-canvas"></canvas>
+
+  <!-- Tooltip savet -->
+  <div id="tip-overlay">💡 Kliknite bilo gde na ekranu da postavite 3D objekat u prostoru</div>
+
+  <!-- Uvodni modal sa pametnom detekcijom uređaja -->
+  <div id="welcome-overlay">
+    <div id="welcome-content">
+      <div id="device-badge" class="badge-pill">
+        <span>🔍 Provera podrške za WebXR...</span>
+      </div>
+
+      <h1>Quest 3 AR Vision</h1>
+      <p>
+        Interaktivno AR iskustvo za prepoznavanje objekata u prostoru pomoću veštačke inteligencije (TensorFlow.js COCO-SSD).
+      </p>
+
+      <div class="vr-warning" id="vr-notice-box">
+        <strong>Režim rada</strong>
+        <span id="notice-desc">
+          Glavne prostorne funkcionalnosti (passthrough, detekcija ravni i 3D sidra) optimizovane su za <strong>Meta Quest 3</strong>. 
+          Na računaru i mobilnom uređaju možete pokrenuti <strong>Desktop / Web kamera simulaciju</strong> sa AI detekcijom uživo.
+        </span>
+      </div>
+
+      <div class="btn-group">
+        <button id="primary-start-btn" class="btn-primary">Pokreni iskustvo</button>
+        <button id="secondary-start-btn" class="btn-secondary" style="display: none;">Druga opcija</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donji kontrolni HUD -->
+  <div id="ui">
+    <div class="hud-left">
+      <div id="status" class="hud-pill">Učitavanje AI modela...</div>
+      <div id="counter" class="hud-pill">Detektovano objekata: 0</div>
+    </div>
+    <div class="hud-right">
+      <button id="clear-objects-btn" class="hud-btn-alt" title="Ukloni postavljene 3D objekte">🗑️ Očisti 3D</button>
+      <button id="action-btn" class="hud-btn">Pokreni AR</button>
+    </div>
+  </div>
+
+  <script>
+    // ── Elementi ────────────────────────────────────────────────
+    const statusEl = document.getElementById('status');
+    const counterEl = document.getElementById('counter');
+    const deviceBadge = document.getElementById('device-badge');
+    const noticeDesc = document.getElementById('notice-desc');
+    const primaryStartBtn = document.getElementById('primary-start-btn');
+    const secondaryStartBtn = document.getElementById('secondary-start-btn');
+    const welcomeOverlay = document.getElementById('welcome-overlay');
+    const mainUI = document.getElementById('ui');
+    const actionBtn = document.getElementById('action-btn');
+    const clearBtn = document.getElementById('clear-objects-btn');
+    const tipOverlay = document.getElementById('tip-overlay');
+
+    const cameraFeed = document.getElementById('camera-feed');
+    const tfVideo = document.getElementById('tfvideo');
+    const overlayCanvas = document.getElementById('detection-overlay');
+    const overlayCtx = overlayCanvas.getContext('2d');
+    const threeCanvas = document.getElementById('three-canvas');
+
+    let isWebXRSupported = false;
+    let isDesktopMode = false;
+    let isCameraRunning = false;
+    let currentSession = null;
+    let placedObjects = [];
+
+    // ── Three.js Setup ──────────────────────────────────────────
+    const renderer = new THREE.WebGLRenderer({
+      canvas: threeCanvas,
+      antialias: true,
+      alpha: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+    camera.position.set(0, 0, 1.5);
+    scene.add(camera);
+
+    // Osvetljenje
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 1.2));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    dirLight.position.set(1, 2, 1);
+    scene.add(dirLight);
+
+    // Hit-test kursor za WebXR
+    const cursorGeo = new THREE.RingGeometry(0.04, 0.06, 32);
+    cursorGeo.rotateX(-Math.PI / 2);
+    const cursor = new THREE.Mesh(
+      cursorGeo,
+      new THREE.MeshBasicMaterial({ color: 0x00FF88, side: THREE.DoubleSide })
+    );
+    cursor.visible = false;
+    scene.add(cursor);
+
+    const detectedPlanes = new Map();
+
+    // ── AI Model & Boje ─────────────────────────────────────────
+    let cocoModel = null;
+    let activeLabels = [];
+    let lastDetectionTime = 0;
+    const DETECT_INTERVAL_MS = 800; // detekcija svakih 800ms
+
+    const classColors = {
+      person: '#FF3B30',
+      chair: '#007AFF',
+      cup: '#FF9500',
+      laptop: '#30D158',
+      phone: '#AF52DE',
+      book: '#FFD60A',
+      bottle: '#FF2D55',
+      keyboard: '#5856D6',
+      mouse: '#FF6482',
+      tv: '#34C759',
+      cellphone: '#AF52DE',
+      default: '#00F2FE'
+    };
+
+    // ── Pomoćne funkcije ────────────────────────────────────────
+    function makeLabel(text, color = '#00FFAA') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = 'rgba(10, 14, 26, 0.85)';
+      ctx.beginPath();
+      ctx.roundRect(8, 8, canvas.width - 16, canvas.height - 16, 20);
+      ctx.fill();
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.font = 'bold 48px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(0.6, 0.15, 1);
+      return sprite;
+    }
+
+    function makeBox3D(w, h, colorHex) {
+      const color = parseInt(colorHex.replace('#', ''), 16);
+      const edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, 0.02));
+      const mat = new THREE.LineBasicMaterial({ color, depthTest: false, linewidth: 2 });
+      return new THREE.LineSegments(edges, mat);
+    }
+
+    function detectionTo3D(bbox, videoWidth, videoHeight, placeDist = 1.8) {
+      const nx = (bbox.x + bbox.width / 2) / videoWidth - 0.5;
+      const ny = (bbox.y + bbox.height / 2) / videoHeight - 0.5;
+
+      const fovH = 70 * Math.PI / 180;
+      const fovV = fovH * (videoHeight / videoWidth);
+
+      const dir = new THREE.Vector3(
+        Math.tan(nx * fovH),
+        Math.tan(-ny * fovV),
+        -1
+      ).normalize();
+
+      dir.applyQuaternion(camera.quaternion);
+      return camera.position.clone().addScaledVector(dir, placeDist);
+    }
+
+    function bbox2dSize3D(bboxW, bboxH, videoW, videoH, dist = 1.8) {
+      const fovH = 70 * Math.PI / 180;
+      const totalW = 2 * dist * Math.tan(fovH / 2);
+      const totalH = totalW * (videoH / videoW);
+      return {
+        w: (bboxW / videoW) * totalW,
+        h: (bboxH / videoH) * totalH
+      };
+    }
+
+    function spawn3DObject(position) {
+      const colors = [0x00F2FE, 0x00FF88, 0xFF9500, 0xFF2D55, 0xAF52DE];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      const group = new THREE.Group();
+      const knot = new THREE.Mesh(
+        new THREE.TorusKnotGeometry(0.07, 0.022, 64, 12),
+        new THREE.MeshStandardMaterial({
+          color,
+          metalness: 0.85,
+          roughness: 0.18,
+          emissive: color,
+          emissiveIntensity: 0.2
+        })
+      );
+      group.add(knot);
+      group.position.copy(position);
+      scene.add(group);
+      placedObjects.push(group);
+    }
+
+    // ── Detekcija i iscrtavanje (Desktop / Web kamera mod) ──────
+    function resizeOverlay() {
+      overlayCanvas.width = window.innerWidth;
+      overlayCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeOverlay);
+    resizeOverlay();
+
+    function drawDesktopDetections(predictions, videoW, videoH) {
+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+      const canvasW = overlayCanvas.width;
+      const canvasH = overlayCanvas.height;
+
+      // Izračunaj odnos i skaliranje video stream-a unutar ekrana (object-fit: cover)
+      const scale = Math.max(canvasW / videoW, canvasH / videoH);
+      const offsetX = (canvasW - videoW * scale) / 2;
+      const offsetY = (canvasH - videoH * scale) / 2;
+
+      predictions.forEach(pred => {
+        const [bx, by, bw, bh] = pred.bbox;
+        const x = bx * scale + offsetX;
+        const y = by * scale + offsetY;
+        const w = bw * scale;
+        const h = bh * scale;
+
+        const color = classColors[pred.class] || classColors.default;
+        const score = Math.round(pred.score * 100);
+
+        // Pravougaonik
+        overlayCtx.strokeStyle = color;
+        overlayCtx.lineWidth = 3;
+        overlayCtx.beginPath();
+        overlayCtx.roundRect(x, y, w, h, 8);
+        overlayCtx.stroke();
+
+        // Label pozadina
+        overlayCtx.font = 'bold 14px "Segoe UI", sans-serif';
+        const labelText = `${pred.class.toUpperCase()} ${score}%`;
+        const textWidth = overlayCtx.measureText(labelText).width;
+        const padX = 10;
+        const labelH = 26;
+
+        overlayCtx.fillStyle = 'rgba(10, 14, 26, 0.88)';
+        overlayCtx.beginPath();
+        overlayCtx.roundRect(x, Math.max(0, y - labelH - 4), textWidth + padX * 2, labelH, 6);
+        overlayCtx.fill();
+
+        overlayCtx.strokeStyle = color;
+        overlayCtx.lineWidth = 1.5;
+        overlayCtx.stroke();
+
+        // Label tekst
+        overlayCtx.fillStyle = color;
+        overlayCtx.textBaseline = 'middle';
+        overlayCtx.fillText(labelText, x + padX, Math.max(0, y - labelH - 4) + labelH / 2);
+      });
+    }
+
+    async function runDetection(videoSource) {
+      if (!cocoModel || videoSource.readyState < 2) return;
+
+      const predictions = await cocoModel.detect(videoSource);
+      const valid = predictions.filter(p => p.score >= 0.5);
+
+      counterEl.textContent = 'Detektovano objekata: ' + valid.length;
+
+      if (isDesktopMode) {
+        // Desktop 2D Overlay
+        drawDesktopDetections(valid, videoSource.videoWidth, videoSource.videoHeight);
+      } else {
+        // WebXR 3D markeri u prostoru
+        activeLabels.forEach(({ sprite, box }) => { scene.remove(sprite); scene.remove(box); });
+        activeLabels = [];
+
+        if (valid.length === 0) return;
+
+        const vw = videoSource.videoWidth;
+        const vh = videoSource.videoHeight;
+        const DIST = 1.8;
+
+        valid.forEach(pred => {
+          const label = pred.class;
+          const score = Math.round(pred.score * 100);
+          const color = classColors[label] || classColors.default;
+          const bbox = { x: pred.bbox[0], y: pred.bbox[1], width: pred.bbox[2], height: pred.bbox[3] };
+
+          const pos3D = detectionTo3D(bbox, vw, vh, DIST);
+
+          const sprite = makeLabel(`${label} ${score}%`, color);
+          sprite.position.copy(pos3D);
+          sprite.position.y += 0.12;
+          scene.add(sprite);
+
+          const { w, h } = bbox2dSize3D(bbox.width, bbox.height, vw, vh, DIST);
+          const box = makeBox3D(w, h, color);
+          box.position.copy(pos3D);
+          box.quaternion.copy(camera.quaternion);
+          scene.add(box);
+
+          activeLabels.push({ sprite, box, expireAt: Date.now() + 3500 });
+        });
+      }
+    }
+
+    // ── Pokretanje Desktop Kamera moda ──────────────────────────
+    async function startDesktopCameraMode() {
+      isDesktopMode = true;
+      welcomeOverlay.style.opacity = '0';
+      setTimeout(() => {
+        welcomeOverlay.style.visibility = 'hidden';
+        mainUI.classList.add('visible');
+        tipOverlay.style.display = 'block';
+      }, 400);
+
+      actionBtn.textContent = 'Zaustavi kameru';
+      statusEl.textContent = 'Pokretanje web kamere...';
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        cameraFeed.srcObject = stream;
+        await cameraFeed.play();
+
+        cameraFeed.style.display = 'block';
+        overlayCanvas.style.display = 'block';
+        isCameraRunning = true;
+        statusEl.textContent = 'Kamera i AI aktivni';
+
+        // Render petlja za Desktop
+        function desktopLoop(time) {
+          if (!isCameraRunning) return;
+
+          // Animacija rotacije 3D objekata
+          placedObjects.forEach(obj => {
+            obj.rotation.x += 0.01;
+            obj.rotation.y += 0.015;
+          });
+
+          renderer.render(scene, camera);
+
+          if (time - lastDetectionTime > DETECT_INTERVAL_MS) {
+            lastDetectionTime = time;
+            runDetection(cameraFeed);
+          }
+
+          requestAnimationFrame(desktopLoop);
+        }
+        requestAnimationFrame(desktopLoop);
+
+      } catch (err) {
+        console.error('Kamera greska:', err);
+        statusEl.textContent = 'Kamera nije dostupna: ' + err.message;
+      }
+    }
+
+    // Klik na ekranu postavlja 3D objekat u desktop modu
+    window.addEventListener('pointerdown', (e) => {
+      if (!isDesktopMode || !isCameraRunning) return;
+      if (e.target.closest('#ui') || e.target.closest('#welcome-overlay')) return;
+
+      const mouse = new THREE.Vector2(
+        (e.clientX / window.innerWidth) * 2 - 1,
+        -(e.clientY / window.innerHeight) * 2 + 1
+      );
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      const targetPos = raycaster.ray.origin.clone().add(raycaster.ray.direction.clone().multiplyScalar(1.2));
+      spawn3DObject(targetPos);
+    });
+
+    // ── Pokretanje WebXR AR sesije (Meta Quest 3) ───────────────
+    async function startWebXRMode() {
+      welcomeOverlay.style.opacity = '0';
+      setTimeout(() => {
+        welcomeOverlay.style.visibility = 'hidden';
+        mainUI.classList.add('visible');
+      }, 400);
+
+      try {
+        const session = await navigator.xr.requestSession('immersive-ar', {
+          requiredFeatures: ['local-floor'],
+          optionalFeatures: ['hit-test', 'plane-detection', 'dom-overlay'],
+          domOverlay: { root: document.getElementById('ui') }
+        });
+
+        currentSession = session;
+        actionBtn.textContent = 'Izlaz iz AR';
+        statusEl.textContent = 'AR aktivan (Quest 3)';
+
+        renderer.xr.setReferenceSpaceType('local-floor');
+        await renderer.xr.setSession(session);
+
+        const viewerSpace = await session.requestReferenceSpace('viewer');
+        const refSpace = await session.requestReferenceSpace('local-floor');
+        let hitTestSource = null;
+        if (session.requestHitTestSource) {
+          hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+        }
+
+        // Kamera za TF.js
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: 640, height: 480 }
+          });
+          tfVideo.srcObject = stream;
+          await tfVideo.play();
+        } catch (e) {
+          console.warn('getUserMedia nije dostupan u WebXR:', e.message);
+        }
+
+        session.addEventListener('select', () => {
+          if (cursor.visible) {
+            spawn3DObject(cursor.position);
+          }
+        });
+
+        session.addEventListener('end', () => {
+          currentSession = null;
+          actionBtn.textContent = 'Pokreni AR';
+          statusEl.textContent = 'AR sesija završena.';
+          hitTestSource = null;
+          cursor.visible = false;
+          if (tfVideo.srcObject) {
+            tfVideo.srcObject.getTracks().forEach(t => t.stop());
+            tfVideo.srcObject = null;
+          }
+          renderer.setAnimationLoop(null);
+        });
+
+        // WebXR render petlja
+        renderer.setAnimationLoop(function (time, frame) {
+          scene.background = null;
+          renderer.setClearColor(0x000000, 0);
+
+          placedObjects.forEach(obj => {
+            obj.rotation.x += 0.01;
+            obj.rotation.y += 0.015;
+          });
+
+          if (!frame) { renderer.render(scene, camera); return; }
+
+          if (hitTestSource && refSpace) {
+            const results = frame.getHitTestResults(hitTestSource);
+            if (results.length > 0) {
+              const pose = results[0].getPose(refSpace);
+              cursor.position.copy(pose.transform.position);
+              cursor.quaternion.copy(pose.transform.orientation);
+              cursor.visible = true;
+            } else {
+              cursor.visible = false;
+            }
+          }
+
+          if (session.detectedPlanes) {
+            const xrRS = renderer.xr.getReferenceSpace();
+            session.detectedPlanes.forEach(plane => {
+              if (!detectedPlanes.has(plane)) {
+                const label = plane.semanticLabel || 'unknown';
+                const pColors = { floor: '#00FF88', wall: '#0088FF', table: '#FF44FF', unknown: '#AAAAAA' };
+                const c = parseInt((pColors[label] || '#AAAAAA').replace('#', ''), 16);
+                const mesh = new THREE.Mesh(
+                  new THREE.PlaneGeometry(0.5, 0.5),
+                  new THREE.MeshBasicMaterial({ color: c, opacity: 0.25, transparent: true, side: THREE.DoubleSide })
+                );
+                scene.add(mesh);
+                detectedPlanes.set(plane, mesh);
+              }
+              const mesh = detectedPlanes.get(plane);
+              if (mesh && xrRS) {
+                const pose = frame.getPose(plane.planeSpace, xrRS);
+                if (pose) {
+                  mesh.position.copy(pose.transform.position);
+                  mesh.quaternion.copy(pose.transform.orientation);
+                }
+              }
+            });
+          }
+
+          if (time - lastDetectionTime > DETECT_INTERVAL_MS && tfVideo.readyState >= 2) {
+            lastDetectionTime = time;
+            runDetection(tfVideo);
+          }
+
+          const now = Date.now();
+          activeLabels = activeLabels.filter(({ sprite, box, expireAt }) => {
+            if (now > expireAt) { scene.remove(sprite); scene.remove(box); return false; }
+            return true;
+          });
+
+          renderer.render(scene, camera);
+        });
+
+      } catch (err) {
+        console.error('AR greška:', err);
+        statusEl.textContent = 'Greška: ' + err.message;
+      }
+    }
+
+    // ── Dugmad i Akcije ─────────────────────────────────────────
+    actionBtn.addEventListener('click', async () => {
+      if (currentSession) {
+        await currentSession.end();
+      } else if (isDesktopMode && isCameraRunning) {
+        if (cameraFeed.srcObject) {
+          cameraFeed.srcObject.getTracks().forEach(t => t.stop());
+          cameraFeed.srcObject = null;
+        }
+        isCameraRunning = false;
+        cameraFeed.style.display = 'none';
+        overlayCanvas.style.display = 'none';
+        actionBtn.textContent = 'Pokreni kameru';
+        statusEl.textContent = 'Kamera zaustavljena.';
+      } else if (isDesktopMode && !isCameraRunning) {
+        startDesktopCameraMode();
+      } else if (isWebXRSupported) {
+        startWebXRMode();
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      placedObjects.forEach(obj => scene.remove(obj));
+      placedObjects = [];
+    });
+
+    // ── Inicijalizacija i Provera uređaja ────────────────────────
+    statusEl.textContent = 'Učitavanje AI modela (coco-ssd)...';
+
+    cocoSsd.load().then(model => {
+      cocoModel = model;
+      statusEl.textContent = 'AI model spreman';
+
+      if (navigator.xr && navigator.xr.isSessionSupported) {
+        navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+          isWebXRSupported = supported;
+
+          if (supported) {
+            deviceBadge.className = 'badge-pill';
+            deviceBadge.innerHTML = '<span>🟢 Meta Quest / WebXR AR podržan</span>';
+            noticeDesc.innerHTML = 'Vaš uređaj podržava <strong>WebXR AR režim</strong> sa prostornom detekcijom ravni i AI prepoznavanjem u sobi.';
+            primaryStartBtn.textContent = 'Započni Quest 3 AR mod';
+            secondaryStartBtn.textContent = 'Ili pokreni Desktop/Kamera simulaciju';
+            secondaryStartBtn.style.display = 'block';
+
+            primaryStartBtn.onclick = startWebXRMode;
+            secondaryStartBtn.onclick = startDesktopCameraMode;
+            actionBtn.textContent = 'Pokreni AR';
+          } else {
+            deviceBadge.className = 'badge-pill desktop';
+            deviceBadge.innerHTML = '<span>💻 Desktop / Mobilni pregledač</span>';
+            noticeDesc.innerHTML = 'Puni WebXR AR režim zahteva <strong>Meta Quest 3</strong>. Na ovom uređaju možete pokrenuti <strong>Desktop / Web kamera simulaciju</strong> sa AI detekcijom i 3D prikazom u realnom vremenu.';
+            primaryStartBtn.textContent = 'Pokreni Web kameru sa AI';
+            primaryStartBtn.onclick = startDesktopCameraMode;
+            actionBtn.textContent = 'Zaustavi kameru';
+          }
+        }).catch(() => {
+          setupDesktopFallback();
+        });
+      } else {
+        setupDesktopFallback();
+      }
+    }).catch(e => {
+      statusEl.textContent = 'Greška pri učitavanju modela: ' + e.message;
+      setupDesktopFallback();
+    });
+
+    function setupDesktopFallback() {
+      deviceBadge.className = 'badge-pill desktop';
+      deviceBadge.innerHTML = '<span>💻 Desktop / Web pregledač</span>';
+      noticeDesc.innerHTML = 'Puni WebXR AR režim zahteva <strong>Meta Quest 3</strong>. Na ovom uređaju možete pokrenuti <strong>Desktop / Web kamera simulaciju</strong> sa AI detekcijom i 3D prikazom.';
+      primaryStartBtn.textContent = 'Pokreni Web kameru sa AI';
+      primaryStartBtn.onclick = startDesktopCameraMode;
+      actionBtn.textContent = 'Zaustavi kameru';
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+
+</html>

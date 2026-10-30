@@ -1,0 +1,7 @@
+*.zip
+.DS_Store
+
+# Virtualmin / AWStats files in public_html
+/icon/
+/awstats-icon
+/awstatsicons
