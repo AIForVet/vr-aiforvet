@@ -82,8 +82,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 16px;
-      background: rgba(10, 14, 26, 0.82);
+      padding: 8px 16px;
+      background: rgba(10, 14, 26, 0.85);
       backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 16px;
@@ -144,6 +144,24 @@
       background: rgba(0, 204, 68, 0.2);
       border-color: rgba(0, 204, 68, 0.5);
       color: #34d399;
+    }
+
+    .lang-dropdown {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .lang-dropdown option {
+      background: #111526;
+      color: #fff;
     }
 
     /* Welcome Modal Overlay */
@@ -595,13 +613,19 @@
       <span>AI for VET <span class="sub" style="font-weight: 400; opacity: 0.7;">• VR & Vision Lab</span></span>
     </a>
     <div class="nav-links">
-      <button id="tts-toggle-btn" class="nav-btn" title="Uključi / isključi glasovni vodič">
+      <select id="lang-select" class="lang-dropdown" title="Change Language / Promeni jezik">
+        <option value="en">🇬🇧 EN</option>
+        <option value="sr" selected>🇷🇸 SR</option>
+        <option value="pt">🇵🇹 PT</option>
+        <option value="sk">🇸🇰 SK</option>
+      </select>
+      <button id="tts-toggle-btn" class="nav-btn" title="Voice Guide / Glasovni vodič">
         <span id="tts-icon">🔊</span> <span id="tts-label">Glas: Uključen</span>
       </button>
-      <button id="open-guide-btn" class="nav-btn" title="Kako AI detektuje objekte?">
-        <span>📚</span> Vodič
+      <button id="open-guide-btn" class="nav-btn" title="Guide / Vodič">
+        <span>📚</span> <span id="guide-btn-label">Vodič</span>
       </button>
-      <a href="https://sim.aiforvet.eu" target="_blank" rel="noopener" class="nav-btn" title="Idi na AISim Lab simulacije">
+      <a href="https://sim.aiforvet.eu" target="_blank" rel="noopener" class="nav-btn" title="AISim Lab">
         <span>🧪</span> AISim Lab ↗
       </a>
     </div>
@@ -613,32 +637,32 @@
   <!-- Edukativni modal: Kako AI vidi svet -->
   <div id="guide-modal">
     <div id="guide-content">
-      <h2>🧠 Kako Veštačka Inteligencija prepoznaje objekte?</h2>
-      <p>
+      <h2 id="guide-title">🧠 Kako Veštačka Inteligencija prepoznaje objekte?</h2>
+      <p id="guide-desc">
         U ovoj vežbi koristite <strong>COCO-SSD</strong> konvolutivnu neuronsku mrežu koja se u potpunosti izvršava 
         u vašem internet pregledaču uz pomoć <strong>TensorFlow.js</strong> tehnologije.
       </p>
 
       <div class="guide-card-grid">
         <div class="guide-card">
-          <h4>1. Ulazni video frejm</h4>
-          <p>Kamera šalje 30 slika u sekundi. Mreža svaku sliku skalira i normalizuje pre analize.</p>
+          <h4 id="gc1-title">1. Ulazni video frejm</h4>
+          <p id="gc1-desc">Kamera šalje 30 slika u sekundi. Mreža svaku sliku skalira i normalizuje pre analize.</p>
         </div>
         <div class="guide-card">
-          <h4>2. Konvolutivni slojevi (CNN)</h4>
-          <p>Mreža prepoznaje ivice, teksture i oblike, sklapajući ih u delove tela ili predmeta.</p>
+          <h4 id="gc2-title">2. Konvolutivni slojevi (CNN)</h4>
+          <p id="gc2-desc">Mreža prepoznaje ivice, teksture i oblike, sklapajući ih u delove tela ili predmeta.</p>
         </div>
         <div class="guide-card">
-          <h4>3. Bounding Box (Okvir)</h4>
-          <p>Za svaki prepoznati objekat algoritam predviđa 4 koordinate pravougaonika (x, y, širina, visina).</p>
+          <h4 id="gc3-title">3. Bounding Box (Okvir)</h4>
+          <p id="gc3-desc">Za svaki prepoznati objekat algoritam predviđa 4 koordinate pravougaonika (x, y, širina, visina).</p>
         </div>
         <div class="guide-card">
           <h4>4. Pouzdanost (Confidence %)</h4>
-          <p>Procenat verovatnoće (npr. 94%) označava koliko je AI siguran u identifikovanu klasu.</p>
+          <p id="gc4-desc">Procenat verovatnoće (npr. 94%) označava koliko je AI siguran u identifikovanu klasu.</p>
         </div>
       </div>
 
-      <p style="font-size: 13px; color: #94a3b8;">
+      <p id="guide-footer" style="font-size: 13px; color: #94a3b8;">
         Projekat je deo programa <strong>Erasmus+ AI for VET</strong>, sa ciljem integracije praktične veštačke 
         inteligencije i prostornog računarstva (WebXR) u stručno obrazovanje.
       </p>
@@ -654,13 +678,13 @@
         <span>🔍 Provera uređaja...</span>
       </div>
 
-      <h1>Quest 3 AR Vision</h1>
-      <p>
+      <h1 id="welcome-title">Quest 3 AR Vision</h1>
+      <p id="welcome-desc">
         Interaktivno AR iskustvo za prepoznavanje objekata u prostoru pomoću veštačke inteligencije (TensorFlow.js COCO-SSD).
       </p>
 
       <div class="vr-warning" id="vr-notice-box">
-        <strong>Režim rada</strong>
+        <strong id="notice-title">Režim rada</strong>
         <span id="notice-desc">
           Glavne prostorne funkcionalnosti (passthrough, detekcija ravni i 3D sidra) optimizovane su za <strong>Meta Quest 3</strong>. 
           Na mobilnom telefonu i računaru pokrećemo <strong>Kamera mod</strong> sa AI prepoznavanjem uživo.
@@ -681,7 +705,7 @@
       <div id="counter" class="hud-pill">Detektovano: 0</div>
       
       <!-- Filter režima rada -->
-      <select id="mode-filter" class="hud-select" title="Izaberite fokus vežbe">
+      <select id="mode-filter" class="hud-select" title="Fokus vežbe">
         <option value="all">🌐 Svi objekti (COCO 80)</option>
         <option value="it">💻 IT & Kancelarija</option>
         <option value="workshop">🔧 Radionica & Alati</option>
@@ -690,9 +714,9 @@
     </div>
 
     <div class="hud-right">
-      <button id="switch-cam-btn" class="hud-btn-alt" title="Promeni kameru (prednja / zadnja)">🔄 Kamera</button>
-      <button id="snapshot-btn" class="hud-btn-alt" title="Preuzmi snimak vežbe sa AI analizom">📸 Snimi</button>
-      <button id="clear-objects-btn" class="hud-btn-alt" title="Ukloni postavljene 3D objekte">🗑️ Očisti</button>
+      <button id="switch-cam-btn" class="hud-btn-alt" title="Promeni kameru">🔄 Kamera</button>
+      <button id="snapshot-btn" class="hud-btn-alt" title="Preuzmi snimak vežbe">📸 Snimi</button>
+      <button id="clear-objects-btn" class="hud-btn-alt" title="Ukloni 3D objekte">🗑️ Očisti</button>
       <button id="action-btn" class="hud-btn">Pokreni kameru</button>
     </div>
   </div>
@@ -702,6 +726,9 @@
     const statusEl = document.getElementById('status');
     const counterEl = document.getElementById('counter');
     const deviceBadge = document.getElementById('device-badge');
+    const welcomeTitle = document.getElementById('welcome-title');
+    const welcomeDesc = document.getElementById('welcome-desc');
+    const noticeTitle = document.getElementById('notice-title');
     const noticeDesc = document.getElementById('notice-desc');
     const primaryStartBtn = document.getElementById('primary-start-btn');
     const secondaryStartBtn = document.getElementById('secondary-start-btn');
@@ -718,7 +745,19 @@
     const openGuideBtn = document.getElementById('open-guide-btn');
     const closeGuideBtn = document.getElementById('close-guide-btn');
     const guideModal = document.getElementById('guide-modal');
+    const guideTitle = document.getElementById('guide-title');
+    const guideDesc = document.getElementById('guide-desc');
+    const guideBtnLabel = document.getElementById('guide-btn-label');
+    const guideFooter = document.getElementById('guide-footer');
+    const gc1Title = document.getElementById('gc1-title');
+    const gc1Desc = document.getElementById('gc1-desc');
+    const gc2Title = document.getElementById('gc2-title');
+    const gc2Desc = document.getElementById('gc2-desc');
+    const gc3Title = document.getElementById('gc3-title');
+    const gc3Desc = document.getElementById('gc3-desc');
+    const gc4Desc = document.getElementById('gc4-desc');
 
+    const langSelect = document.getElementById('lang-select');
     const ttsToggleBtn = document.getElementById('tts-toggle-btn');
     const ttsIcon = document.getElementById('tts-icon');
     const ttsLabel = document.getElementById('tts-label');
@@ -728,6 +767,330 @@
     const overlayCanvas = document.getElementById('detection-overlay');
     const overlayCtx = overlayCanvas.getContext('2d');
     const threeCanvas = document.getElementById('three-canvas');
+
+    // ── i18n Rečnik za 4 jezika (EN / SR / PT / SK) ─────────────
+    let currentLang = localStorage.getItem('aiforvet_lang') || 'sr';
+    if (!['en', 'sr', 'pt', 'sk'].includes(currentLang)) currentLang = 'sr';
+    langSelect.value = currentLang;
+
+    const i18n = {
+      en: {
+        code: 'en-US',
+        voiceOn: 'Voice: On',
+        voiceOff: 'Voice: Off',
+        voiceToggledOn: 'Voice guide is enabled.',
+        guideBtn: 'Guide',
+        tip: '💡 Tap the screen to place a 3D object in space',
+        guideTitle: '🧠 How does Artificial Intelligence detect objects?',
+        guideDesc: 'In this lab, you are using the <strong>COCO-SSD</strong> convolutional neural network running entirely inside your web browser via <strong>TensorFlow.js</strong>.',
+        gc1T: '1. Input Video Frame',
+        gc1D: 'The camera captures 30 frames per second. The network scales and normalizes each frame before analysis.',
+        gc2T: '2. Convolutional Layers (CNN)',
+        gc2D: 'The neural network recognizes edges, textures, and patterns, assembling them into object parts.',
+        gc3T: '3. Bounding Box',
+        gc3D: 'For each recognized object, the algorithm predicts four rectangle coordinates (x, y, width, height).',
+        gc4D: 'The probability percentage (e.g. 94%) indicates how confident the AI model is in the classification.',
+        guideFooter: 'This project is part of the <strong>Erasmus+ AI for VET</strong> program, aiming to integrate practical AI and spatial computing into vocational education.',
+        closeGuide: 'Close Guide',
+        badgeChecking: '🔍 Checking device...',
+        badgeQuest: '🟢 Meta Quest 3 detected',
+        badgeMobile: '📱 Mobile Phone detected',
+        badgeDesktop: '💻 Desktop / Laptop detected',
+        welcomeTitle: 'Quest 3 AR Vision',
+        welcomeDesc: 'Interactive AR & AI vision experience using TensorFlow.js COCO-SSD object detection.',
+        noticeTitle: 'Operating Mode',
+        noticeQuest: 'Your device supports <strong>WebXR AR mode</strong> with spatial plane detection and room-scale AI tracking.',
+        noticeMobile: 'On mobile phones, we use the <strong>device camera</strong> for real-time AI detection and 3D interaction.',
+        noticeDesktop: 'Full WebXR AR mode requires <strong>Meta Quest 3</strong>. On desktop, we launch the <strong>Webcam mode</strong> with live AI detection.',
+        startQuest: 'Start Quest 3 AR mode',
+        startCamera: 'Start Camera with AI',
+        secondaryCam: 'Or start Camera Mode',
+        startingCam: 'Starting camera...',
+        startingAR: 'Starting AR...',
+        loadingAI: 'Loading AI model...',
+        aiReady: 'AI model ready',
+        detected: 'Detected',
+        filterAll: '🌐 All objects (COCO 80)',
+        filterIT: '💻 IT & Office',
+        filterWorkshop: '🔧 Workshop & Tools',
+        filterSafety: '🦺 Safety at Work (Edu)',
+        btnSwitchCam: '🔄 Camera',
+        btnSnapshot: '📸 Snapshot',
+        btnClear: '🗑️ Clear',
+        btnStartCam: 'Start camera',
+        btnStopCam: 'Stop camera',
+        btnExitAR: 'Exit AR',
+        camActive: 'Camera & AI active',
+        camStopped: 'Camera stopped.',
+        camNotAvail: 'Camera unavailable: ',
+        snapshotSaved: 'Lab snapshot saved.',
+        arEnded: 'AR session ended.',
+        detectedPrefix: 'Detected',
+        watermarkLab: 'Erasmus+ AI for VET • VR & Vision Lab (vr.aiforvet.eu)',
+        watermarkDate: 'Lab Date',
+        waitText: 'Please wait...'
+      },
+      sr: {
+        code: 'sr-RS',
+        voiceOn: 'Glas: Uključen',
+        voiceOff: 'Glas: Isključen',
+        voiceToggledOn: 'Glasovni vodič je uključen.',
+        guideBtn: 'Vodič',
+        tip: '💡 Dodirnite ekran da postavite 3D objekat u prostoru',
+        guideTitle: '🧠 Kako Veštačka Inteligencija prepoznaje objekte?',
+        guideDesc: 'U ovoj vežbi koristite <strong>COCO-SSD</strong> konvolutivnu neuronsku mrežu koja se u potpunosti izvršava u vašem internet pregledaču uz pomoć <strong>TensorFlow.js</strong> tehnologije.',
+        gc1T: '1. Ulazni video frejm',
+        gc1D: 'Kamera šalje 30 slika u sekundi. Mreža svaku sliku skalira i normalizuje pre analize.',
+        gc2T: '2. Konvolutivni slojevi (CNN)',
+        gc2D: 'Mreža prepoznaje ivice, teksture i oblike, sklapajući ih u delove tela ili predmeta.',
+        gc3T: '3. Bounding Box (Okvir)',
+        gc3D: 'Za svaki prepoznati objekat algoritam predviđa 4 koordinate pravougaonika (x, y, širina, visina).',
+        gc4D: 'Procenat verovatnoće (npr. 94%) označava koliko je AI siguran u identifikovanu klasu.',
+        guideFooter: 'Projekat je deo programa <strong>Erasmus+ AI for VET</strong>, sa ciljem integracije praktične veštačke inteligencije i prostornog računarstva (WebXR) u stručno obrazovanje.',
+        closeGuide: 'Zatvori vodič',
+        badgeChecking: '🔍 Provera uređaja...',
+        badgeQuest: '🟢 Meta Quest 3 detektovan',
+        badgeMobile: '📱 Mobilni telefon detektovan',
+        badgeDesktop: '💻 Računar / Laptop detektovan',
+        welcomeTitle: 'Quest 3 AR Vision',
+        welcomeDesc: 'Interaktivno AR iskustvo za prepoznavanje objekata u prostoru pomoću veštačke inteligencije (TensorFlow.js COCO-SSD).',
+        noticeTitle: 'Režim rada',
+        noticeQuest: 'Vaš uređaj podržava <strong>WebXR AR režim</strong> sa prostornom detekcijom ravni i AI prepoznavanjem u sobi.',
+        noticeMobile: 'Na mobilnom telefonu koristimo <strong>kameru uređaja</strong> za AI detekciju i postavljanje 3D objekata u realnom vremenu.',
+        noticeDesktop: 'Puni WebXR AR režim zahteva <strong>Meta Quest 3</strong>. Na računaru pokrećemo <strong>Web kameru</strong> sa AI prepoznavanjem i 3D prikazom.',
+        startQuest: 'Započni Quest 3 AR mod',
+        startCamera: 'Pokreni kameru sa AI',
+        secondaryCam: 'Ili pokreni Kamera mod',
+        startingCam: 'Pokretanje kamere...',
+        startingAR: 'Pokretanje AR...',
+        loadingAI: 'Učitavanje AI modela...',
+        aiReady: 'AI model spreman',
+        detected: 'Detektovano',
+        filterAll: '🌐 Svi objekti (COCO 80)',
+        filterIT: '💻 IT & Kancelarija',
+        filterWorkshop: '🔧 Radionica & Alati',
+        filterSafety: '🦺 Zaštita na radu (Edukacija)',
+        btnSwitchCam: '🔄 Kamera',
+        btnSnapshot: '📸 Snimi',
+        btnClear: '🗑️ Očisti',
+        btnStartCam: 'Pokreni kameru',
+        btnStopCam: 'Zaustavi kameru',
+        btnExitAR: 'Izlaz iz AR',
+        camActive: 'Kamera i AI aktivni',
+        camStopped: 'Kamera zaustavljena.',
+        camNotAvail: 'Kamera nije dostupna: ',
+        snapshotSaved: 'Snimak vežbe je sačuvan.',
+        arEnded: 'AR sesija završena.',
+        detectedPrefix: 'Detektovano',
+        watermarkLab: 'Erasmus+ AI for VET • VR & Vision Lab (vr.aiforvet.eu)',
+        watermarkDate: 'Datum vežbe',
+        waitText: 'Sačekajte...'
+      },
+      pt: {
+        code: 'pt-PT',
+        voiceOn: 'Voz: Ligada',
+        voiceOff: 'Voz: Desligada',
+        voiceToggledOn: 'Guia de voz ativado.',
+        guideBtn: 'Guia',
+        tip: '💡 Toque no ecrã para colocar um objeto 3D no espaço',
+        guideTitle: '🧠 Como a Inteligência Artificial deteta objetos?',
+        guideDesc: 'Neste laboratório, está a usar a rede neuronal convolucional <strong>COCO-SSD</strong> que corre diretamente no seu navegador através do <strong>TensorFlow.js</strong>.',
+        gc1T: '1. Fotograma de Vídeo',
+        gc1D: 'A câmara envia 30 fotogramas por segundo. A rede dimensiona e normaliza cada imagem antes da análise.',
+        gc2T: '2. Camadas Convolucionais (CNN)',
+        gc2D: 'A rede reconhece bordas, texturas e padrões, agrupando-os em partes de objetos.',
+        gc3T: '3. Bounding Box (Caixa Delimitadora)',
+        gc3D: 'Para cada objeto identificado, o algoritmo prevê as quatro coordenadas do retângulo (x, y, largura, altura).',
+        gc4D: 'A percentagem de probabilidade (ex.: 94%) indica a certeza da IA na classificação da classe.',
+        guideFooter: 'Este projeto faz parte do programa <strong>Erasmus+ AI for VET</strong>, integrando IA prática e computação espacial na formação profissional.',
+        closeGuide: 'Fechar Guia',
+        badgeChecking: '🔍 A verificar dispositivo...',
+        badgeQuest: '🟢 Meta Quest 3 detetado',
+        badgeMobile: '📱 Telemóvel detetado',
+        badgeDesktop: '💻 Computador / Portátil detetado',
+        welcomeTitle: 'Quest 3 AR Vision',
+        welcomeDesc: 'Experiência interativa de RA e visão de IA para reconhecimento de objetos usando TensorFlow.js COCO-SSD.',
+        noticeTitle: 'Modo de Operação',
+        noticeQuest: 'O seu dispositivo suporta o <strong>modo WebXR AR</strong> com deteção de planos e rastreio espacial.',
+        noticeMobile: 'No telemóvel, usamos a <strong>câmara do dispositivo</strong> para deteção de IA em tempo real e interação 3D.',
+        noticeDesktop: 'O modo WebXR AR requer o <strong>Meta Quest 3</strong>. No computador, iniciamos a <strong>câmara web</strong> com IA.',
+        startQuest: 'Iniciar Modo RA Quest 3',
+        startCamera: 'Iniciar Câmara com IA',
+        secondaryCam: 'Ou Iniciar Modo Câmara',
+        startingCam: 'A iniciar câmara...',
+        startingAR: 'A iniciar RA...',
+        loadingAI: 'A carregar modelo de IA...',
+        aiReady: 'Modelo de IA pronto',
+        detected: 'Detetados',
+        filterAll: '🌐 Todos os objetos (COCO 80)',
+        filterIT: '💻 TI e Escritório',
+        filterWorkshop: '🔧 Oficina e Ferramentas',
+        filterSafety: '🦺 Segurança no Trabalho',
+        btnSwitchCam: '🔄 Câmara',
+        btnSnapshot: '📸 Capturar',
+        btnClear: '🗑️ Limpar',
+        btnStartCam: 'Iniciar câmara',
+        btnStopCam: 'Parar câmara',
+        btnExitAR: 'Sair da RA',
+        camActive: 'Câmara e IA ativas',
+        camStopped: 'Câmara parada.',
+        camNotAvail: 'Câmara indisponível: ',
+        snapshotSaved: 'Registo do laboratório guardado.',
+        arEnded: 'Sessão RA terminada.',
+        detectedPrefix: 'Detetado',
+        watermarkLab: 'Erasmus+ AI for VET • VR & Vision Lab (vr.aiforvet.eu)',
+        watermarkDate: 'Data do Lab',
+        waitText: 'Aguarde...'
+      },
+      sk: {
+        code: 'sk-SK',
+        voiceOn: 'Hlas: Zapnutý',
+        voiceOff: 'Hlas: Vypnutý',
+        voiceToggledOn: 'Hlasový sprievodca je zapnutý.',
+        guideBtn: 'Sprievodca',
+        tip: '💡 Klepnutím na obrazovku umiestnite 3D objekt do priestoru',
+        guideTitle: '🧠 Ako Umelá Inteligencia rozpoznáva objekty?',
+        guideDesc: 'V tomto cvičení používate konvolučnú neurónovú sieť <strong>COCO-SSD</strong>, ktorá beží priamo vo vašom prehliadači pomocou <strong>TensorFlow.js</strong>.',
+        gc1T: '1. Vstupná snímka videa',
+        gc1D: 'Kamera sníma 30 snímok za sekundu. Sieť pred analýzou upraví veľkosť a normalizuje každý obraz.',
+        gc2T: '2. Konvolučné vrstvy (CNN)',
+        gc2D: 'Neurónová sieť rozpoznáva hrany, textúry a tvary a spája ich do častí objektov.',
+        gc3T: '3. Bounding Box (Ohraničenie)',
+        gc3D: 'Pre každý rozpoznaný objekt algoritmus určí štyri súradnice obdĺžnika (x, y, šírka, výška).',
+        gc4D: 'Percento pravdepodobnosti (napr. 94%) vyjadruje mieru istoty modelu AI pri identifikácii triedy.',
+        guideFooter: 'Tento projekt je súčasťou programu <strong>Erasmus+ AI for VET</strong>, ktorého cieľom je zaviesť praktickú AI a priestorové výpočty do odborného vzdelávania.',
+        closeGuide: 'Zavrieť sprievodcu',
+        badgeChecking: '🔍 Kontrola zariadenia...',
+        badgeQuest: '🟢 Zistený Meta Quest 3',
+        badgeMobile: '📱 Zistený smartfón',
+        badgeDesktop: '💻 Zistený počítač / notebook',
+        welcomeTitle: 'Quest 3 AR Vision',
+        welcomeDesc: 'Interaktívny zážitok z AR a AI na rozpoznávanie objektov v priestore pomocou TensorFlow.js COCO-SSD.',
+        noticeTitle: 'Režim prevádzky',
+        noticeQuest: 'Vaše zariadenie podporuje <strong>režim WebXR AR</strong> s detekciou rovín a priestorovým sledovaním.',
+        noticeMobile: 'Na smartfóne používame <strong>kameru zariadenia</strong> na živú detekciu AI a 3D interakciu.',
+        noticeDesktop: 'Plný režim WebXR AR vyžaduje <strong>Meta Quest 3</strong>. Na počítači spúšťame <strong>webovú kameru</strong> s AI.',
+        startQuest: 'Spustiť režim AR Quest 3',
+        startCamera: 'Spustiť kameru s AI',
+        secondaryCam: 'Alebo spustiť režim kamery',
+        startingCam: 'Spúšťanie kamery...',
+        startingAR: 'Spúšťanie AR...',
+        loadingAI: 'Načítanie modelu AI...',
+        aiReady: 'Model AI pripravený',
+        detected: 'Zistené',
+        filterAll: '🌐 Všetky objekty (COCO 80)',
+        filterIT: '💻 IT a kancelária',
+        filterWorkshop: '🔧 Dielňa a náradie',
+        filterSafety: '🦺 Bezpečnosť pri práci',
+        btnSwitchCam: '🔄 Kamera',
+        btnSnapshot: '📸 Snímka',
+        btnClear: '🗑️ Vymazať',
+        btnStartCam: 'Spustiť kameru',
+        btnStopCam: 'Zastaviť kameru',
+        btnExitAR: 'Ukončiť AR',
+        camActive: 'Kamera a AI sú aktívne',
+        camStopped: 'Kamera zastavená.',
+        camNotAvail: 'Kamera nie je dostupná: ',
+        snapshotSaved: 'Snímka z cvičenia bola uložená.',
+        arEnded: 'Relácia AR ukončená.',
+        detectedPrefix: 'Zistené',
+        watermarkLab: 'Erasmus+ AI for VET • VR & Vision Lab (vr.aiforvet.eu)',
+        watermarkDate: 'Dátum cvičenia',
+        waitText: 'Čakajte, prosím...'
+      }
+    };
+
+    // ── Slovnici objekata za 4 jezika ───────────────────────────
+    const objNames = {
+      en: {
+        person: 'Person', chair: 'Chair', cup: 'Cup', laptop: 'Laptop',
+        'cell phone': 'Mobile phone', phone: 'Phone', book: 'Book', bottle: 'Bottle',
+        keyboard: 'Keyboard', mouse: 'Mouse', tv: 'Monitor / Display', scissors: 'Scissors',
+        backpack: 'Backpack', clock: 'Clock', table: 'Table', 'dining table': 'Table',
+        car: 'Car', default: 'Object'
+      },
+      sr: {
+        person: 'Osoba', chair: 'Stolica', cup: 'Šolja', laptop: 'Laptop računar',
+        'cell phone': 'Mobilni telefon', phone: 'Telefon', book: 'Knjiga', bottle: 'Flašica',
+        keyboard: 'Tastatura', mouse: 'Računarski miš', tv: 'Monitor ili ekran', scissors: 'Makaze',
+        backpack: 'Ranac', clock: 'Sat', table: 'Sto', 'dining table': 'Sto',
+        car: 'Automobil', default: 'Objekat'
+      },
+      pt: {
+        person: 'Pessoa', chair: 'Cadeira', cup: 'Chávena', laptop: 'Portátil',
+        'cell phone': 'Telemóvel', phone: 'Telefone', book: 'Livro', bottle: 'Garrafa',
+        keyboard: 'Teclado', mouse: 'Rato', tv: 'Monitor / Ecrã', scissors: 'Tesoura',
+        backpack: 'Mochila', clock: 'Relógio', table: 'Mesa', 'dining table': 'Mesa',
+        car: 'Carro', default: 'Objeto'
+      },
+      sk: {
+        person: 'Osoba', chair: 'Stolička', cup: 'Šálka', laptop: 'Notebook',
+        'cell phone': 'Mobilný telefón', phone: 'Telefón', book: 'Kniha', bottle: 'Fľaša',
+        keyboard: 'Klávesnica', mouse: 'Počítačová myš', tv: 'Monitor / Obrazovka', scissors: 'Nožnice',
+        backpack: 'Batoh', clock: 'Hodiny', table: 'Stôl', 'dining table': 'Stôl',
+        car: 'Auto', default: 'Objekt'
+      }
+    };
+
+    function t(key) {
+      return (i18n[currentLang] && i18n[currentLang][key]) || i18n['en'][key] || key;
+    }
+
+    function getObjLabel(cls) {
+      const dict = objNames[currentLang] || objNames['en'];
+      return dict[cls] || objNames['en'][cls] || cls;
+    }
+
+    function applyLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('aiforvet_lang', lang);
+      document.documentElement.lang = lang;
+
+      ttsLabel.textContent = isTTSEnabled ? t('voiceOn') : t('voiceOff');
+      guideBtnLabel.textContent = t('guideBtn');
+      tipOverlay.textContent = t('tip');
+
+      guideTitle.innerHTML = t('guideTitle');
+      guideDesc.innerHTML = t('guideDesc');
+      gc1Title.textContent = t('gc1T');
+      gc1Desc.textContent = t('gc1D');
+      gc2Title.textContent = t('gc2T');
+      gc2Desc.textContent = t('gc2D');
+      gc3Title.textContent = t('gc3T');
+      gc3Desc.textContent = t('gc3D');
+      gc4Desc.textContent = t('gc4D');
+      guideFooter.innerHTML = t('guideFooter');
+      document.getElementById('close-guide-btn').textContent = t('closeGuide');
+
+      welcomeTitle.textContent = t('welcomeTitle');
+      welcomeDesc.textContent = t('welcomeDesc');
+      noticeTitle.textContent = t('noticeTitle');
+
+      // Filter options
+      modeFilter.options[0].text = t('filterAll');
+      modeFilter.options[1].text = t('filterIT');
+      modeFilter.options[2].text = t('filterWorkshop');
+      modeFilter.options[3].text = t('filterSafety');
+
+      // Buttons
+      switchCamBtn.textContent = t('btnSwitchCam');
+      snapshotBtn.textContent = t('btnSnapshot');
+      clearBtn.textContent = t('btnClear');
+
+      if (isCameraRunning) {
+        actionBtn.textContent = t('btnStopCam');
+        statusEl.textContent = t('camActive');
+      } else {
+        actionBtn.textContent = isQuestHeadset ? t('startQuest') : t('btnStartCam');
+        if (cocoModel) statusEl.textContent = t('aiReady');
+      }
+
+      setupDeviceUI();
+    }
+
+    langSelect.addEventListener('change', (e) => {
+      applyLanguage(e.target.value);
+    });
 
     // ── Pomoćna funkcija za Wait Circle (Spinner) na dugmićima ──
     function setBtnLoading(btn, loading, text) {
@@ -740,7 +1103,7 @@
         btn.style.opacity = '0.85';
         btn.style.cursor = 'wait';
         const isSm = btn.classList.contains('hud-btn-alt');
-        btn.innerHTML = `<span class="spinner ${isSm ? 'spinner-sm' : ''}"></span>${text || 'Učitavanje...'}`;
+        btn.innerHTML = `<span class="spinner ${isSm ? 'spinner-sm' : ''}"></span>${text || t('waitText')}`;
       } else {
         btn.disabled = false;
         btn.style.opacity = '';
@@ -771,29 +1134,11 @@
     let lastSpokenTime = 0;
     const TTS_COOLDOWN_MS = 6000;
 
-    const translationsSR = {
-      person: 'Osoba',
-      chair: 'Stolica',
-      cup: 'Šolja',
-      laptop: 'Laptop računar',
-      'cell phone': 'Mobilni telefon',
-      phone: 'Telefon',
-      book: 'Knjiga',
-      bottle: 'Flašica',
-      keyboard: 'Tastatura',
-      mouse: 'Računarski miš',
-      tv: 'Monitor ili ekran',
-      scissors: 'Makaze',
-      backpack: 'Ranac',
-      clock: 'Sat',
-      default: 'Objekat'
-    };
-
     function speakText(text) {
       if (!isTTSEnabled || !('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'sr-RS';
+      utterance.lang = (i18n[currentLang] && i18n[currentLang].code) || 'en-US';
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);
@@ -803,12 +1148,12 @@
       isTTSEnabled = !isTTSEnabled;
       if (isTTSEnabled) {
         ttsIcon.textContent = '🔊';
-        ttsLabel.textContent = 'Glas: Uključen';
+        ttsLabel.textContent = t('voiceOn');
         ttsToggleBtn.classList.add('active');
-        speakText('Glasovni vodič je uključen.');
+        speakText(t('voiceToggledOn'));
       } else {
         ttsIcon.textContent = '🔈';
-        ttsLabel.textContent = 'Glas: Isključen';
+        ttsLabel.textContent = t('voiceOff');
         ttsToggleBtn.classList.remove('active');
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       }
@@ -855,13 +1200,11 @@
     camera.position.set(0, 0, 1.5);
     scene.add(camera);
 
-    // Osvetljenje
     scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 1.2));
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
     dirLight.position.set(1, 2, 1);
     scene.add(dirLight);
 
-    // Hit-test kursor za WebXR
     const cursorGeo = new THREE.RingGeometry(0.04, 0.06, 32);
     cursorGeo.rotateX(-Math.PI / 2);
     const cursor = new THREE.Mesh(
@@ -1006,7 +1349,7 @@
 
         const color = classColors[pred.class] || classColors.default;
         const score = Math.round(pred.score * 100);
-        const srTitle = translationsSR[pred.class] || pred.class;
+        const translatedLabel = getObjLabel(pred.class);
 
         // Pravougaonik
         overlayCtx.strokeStyle = color;
@@ -1017,7 +1360,7 @@
 
         // Label pozadina
         overlayCtx.font = 'bold 14px "Segoe UI", sans-serif';
-        const labelText = `${srTitle.toUpperCase()} • ${score}%`;
+        const labelText = `${translatedLabel.toUpperCase()} • ${score}%`;
         const textWidth = overlayCtx.measureText(labelText).width;
         const padX = 12;
         const labelH = 28;
@@ -1045,17 +1388,16 @@
       const filtered = filterByMode(rawPredictions.filter(p => p.score >= 0.5));
       latestPredictions = filtered;
 
-      counterEl.textContent = 'Detektovano: ' + filtered.length;
+      counterEl.textContent = `${t('detected')}: ${filtered.length}`;
 
-      // Govorni odziv za novootkriveni objekat
       if (filtered.length > 0 && isTTSEnabled) {
         const topPred = filtered[0];
         const now = Date.now();
         if (topPred.class !== lastSpokenClass || now - lastSpokenTime > TTS_COOLDOWN_MS) {
           lastSpokenClass = topPred.class;
           lastSpokenTime = now;
-          const naziv = translationsSR[topPred.class] || topPred.class;
-          speakText(`Detektovano: ${naziv}`);
+          const label = getObjLabel(topPred.class);
+          speakText(`${t('detectedPrefix')}: ${label}`);
         }
       }
 
@@ -1072,7 +1414,7 @@
         const DIST = 1.8;
 
         filtered.forEach(pred => {
-          const label = translationsSR[pred.class] || pred.class;
+          const label = getObjLabel(pred.class);
           const score = Math.round(pred.score * 100);
           const color = classColors[pred.class] || classColors.default;
           const bbox = { x: pred.bbox[0], y: pred.bbox[1], width: pred.bbox[2], height: pred.bbox[3] };
@@ -1098,12 +1440,12 @@
     // ── Pokretanje Kamera moda (Desktop & Mobilni telefon) ───────
     async function startDesktopCameraMode(triggerBtn = null) {
       if (triggerBtn) {
-        setBtnLoading(triggerBtn, true, 'Pokretanje kamere...');
+        setBtnLoading(triggerBtn, true, t('startingCam'));
       }
 
       isDesktopMode = true;
-      actionBtn.textContent = 'Zaustavi kameru';
-      statusEl.textContent = 'Pokretanje kamere...';
+      actionBtn.textContent = t('btnStopCam');
+      statusEl.textContent = t('startingCam');
 
       try {
         if (cameraFeed.srcObject) {
@@ -1136,7 +1478,7 @@
         cameraFeed.style.display = 'block';
         overlayCanvas.style.display = 'block';
         isCameraRunning = true;
-        statusEl.textContent = 'Kamera i AI aktivni';
+        statusEl.textContent = t('camActive');
 
         function desktopLoop(time) {
           if (!isCameraRunning) return;
@@ -1159,7 +1501,7 @@
 
       } catch (err) {
         console.error('Kamera greska:', err);
-        statusEl.textContent = 'Kamera nije dostupna: ' + err.message;
+        statusEl.textContent = t('camNotAvail') + err.message;
       } finally {
         if (triggerBtn) setBtnLoading(triggerBtn, false);
       }
@@ -1167,7 +1509,7 @@
 
     // Prebacivanje kamere (prednja / zadnja)
     switchCamBtn.addEventListener('click', async () => {
-      setBtnLoading(switchCamBtn, true, 'Kamera...');
+      setBtnLoading(switchCamBtn, true, t('btnSwitchCam'));
       currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
       if (isCameraRunning) {
         await startDesktopCameraMode();
@@ -1177,7 +1519,6 @@
       }, 500);
     });
 
-    // Klik/Dodir na ekranu postavlja 3D objekat u kamera modu
     window.addEventListener('pointerdown', (e) => {
       if (!isDesktopMode || !isCameraRunning) return;
       if (e.target.closest('#ui') || e.target.closest('#top-nav') || e.target.closest('#guide-modal') || e.target.closest('#welcome-overlay')) return;
@@ -1197,7 +1538,7 @@
     // ── Pokretanje WebXR AR sesije (Meta Quest 3) ───────────────
     async function startWebXRMode(triggerBtn = null) {
       if (triggerBtn) {
-        setBtnLoading(triggerBtn, true, 'Pokretanje AR...');
+        setBtnLoading(triggerBtn, true, t('startingAR'));
       }
 
       try {
@@ -1214,7 +1555,7 @@
         }, 350);
 
         currentSession = session;
-        actionBtn.textContent = 'Izlaz iz AR';
+        actionBtn.textContent = t('btnExitAR');
         statusEl.textContent = 'AR aktivan (Quest 3)';
 
         renderer.xr.setReferenceSpaceType('local-floor');
@@ -1245,8 +1586,8 @@
 
         session.addEventListener('end', () => {
           currentSession = null;
-          actionBtn.textContent = 'Pokreni AR';
-          statusEl.textContent = 'AR sesija završena.';
+          actionBtn.textContent = t('startQuest');
+          statusEl.textContent = t('arEnded');
           hitTestSource = null;
           cursor.visible = false;
           if (tfVideo.srcObject) {
@@ -1320,7 +1661,7 @@
 
       } catch (err) {
         console.warn('WebXR AR nije podržan, automatski prelazimo na kameru:', err);
-        statusEl.textContent = 'WebXR AR nije podržan na uređaju. Pokrećem kameru...';
+        statusEl.textContent = t('startingCam');
         setTimeout(() => {
           startDesktopCameraMode();
         }, 500);
@@ -1332,11 +1673,11 @@
     // ── 📸 Snimanje vežbe za učenike (Snapshot za Moodle) ───────
     snapshotBtn.addEventListener('click', () => {
       if (!isCameraRunning && !currentSession) {
-        alert('Kamera mora biti pokrenuta da biste napravili snimak vežbe.');
+        alert(t('camNotAvail'));
         return;
       }
 
-      setBtnLoading(snapshotBtn, true, 'Snimam...');
+      setBtnLoading(snapshotBtn, true, t('btnSnapshot') + '...');
 
       snapshotFlash.style.opacity = '0.8';
       setTimeout(() => { snapshotFlash.style.opacity = '0'; }, 200);
@@ -1365,7 +1706,7 @@
 
         const color = classColors[pred.class] || '#00F2FE';
         const score = Math.round(pred.score * 100);
-        const naziv = translationsSR[pred.class] || pred.class;
+        const label = getObjLabel(pred.class);
 
         sCtx.strokeStyle = color;
         sCtx.lineWidth = 4;
@@ -1376,7 +1717,7 @@
 
         sCtx.fillStyle = color;
         sCtx.font = 'bold 16px sans-serif';
-        sCtx.fillText(`${naziv.toUpperCase()} (${score}%)`, x + 8, Math.max(20, y - 10));
+        sCtx.fillText(`${label.toUpperCase()} (${score}%)`, x + 8, Math.max(20, y - 10));
       });
 
       sCtx.fillStyle = 'rgba(10, 14, 26, 0.85)';
@@ -1384,21 +1725,22 @@
 
       sCtx.fillStyle = '#00f2fe';
       sCtx.font = 'bold 16px sans-serif';
-      sCtx.fillText('Erasmus+ AI for VET • VR & Vision Lab (vr.aiforvet.eu)', 20, shotCanvas.height - 22);
+      sCtx.fillText(t('watermarkLab'), 20, shotCanvas.height - 22);
 
       const now = new Date();
-      const dateStr = now.toLocaleDateString('sr-RS') + ' ' + now.toLocaleTimeString('sr-RS');
+      const locale = (i18n[currentLang] && i18n[currentLang].code) || 'en-US';
+      const dateStr = now.toLocaleDateString(locale) + ' ' + now.toLocaleTimeString(locale);
       sCtx.fillStyle = '#cbd5e1';
       sCtx.font = '14px sans-serif';
       sCtx.textAlign = 'right';
-      sCtx.fillText(`Datum vežbe: ${dateStr} | Detektovano: ${latestPredictions.length}`, shotCanvas.width - 20, shotCanvas.height - 22);
+      sCtx.fillText(`${t('watermarkDate')}: ${dateStr} | ${t('detected')}: ${latestPredictions.length}`, shotCanvas.width - 20, shotCanvas.height - 22);
 
       const link = document.createElement('a');
-      link.download = `AIForVET_Vezba_${Date.now()}.png`;
+      link.download = `AIForVET_Lab_${Date.now()}.png`;
       link.href = shotCanvas.toDataURL('image/png');
       link.click();
 
-      speakText('Snimak vežbe je sačuvan.');
+      speakText(t('snapshotSaved'));
       setTimeout(() => {
         setBtnLoading(snapshotBtn, false);
       }, 500);
@@ -1407,11 +1749,11 @@
     // ── Dugmad i Akcije ─────────────────────────────────────────
     actionBtn.addEventListener('click', async () => {
       if (currentSession) {
-        setBtnLoading(actionBtn, true, 'Izlazim...');
+        setBtnLoading(actionBtn, true, t('btnExitAR') + '...');
         await currentSession.end();
         setBtnLoading(actionBtn, false);
       } else if (isDesktopMode && isCameraRunning) {
-        setBtnLoading(actionBtn, true, 'Zaustavljam...');
+        setBtnLoading(actionBtn, true, t('btnStopCam') + '...');
         if (cameraFeed.srcObject) {
           cameraFeed.srcObject.getTracks().forEach(t => t.stop());
           cameraFeed.srcObject = null;
@@ -1420,8 +1762,8 @@
         cameraFeed.style.display = 'none';
         overlayCanvas.style.display = 'none';
         setBtnLoading(actionBtn, false);
-        actionBtn.textContent = 'Pokreni kameru';
-        statusEl.textContent = 'Kamera zaustavljena.';
+        actionBtn.textContent = t('btnStartCam');
+        statusEl.textContent = t('camStopped');
       } else if (isDesktopMode && !isCameraRunning) {
         startDesktopCameraMode(actionBtn);
       } else if (isQuestHeadset) {
@@ -1437,60 +1779,60 @@
     });
 
     // ── Inicijalizacija i Provera uređaja ────────────────────────
-    statusEl.textContent = 'Učitavanje AI modela...';
-    setBtnLoading(primaryStartBtn, true, 'Učitavanje AI...');
+    function setupDeviceUI() {
+      if (isQuestHeadset) {
+        deviceBadge.className = 'badge-pill';
+        deviceBadge.innerHTML = `<span>${t('badgeQuest')}</span>`;
+        noticeDesc.innerHTML = t('noticeQuest');
+        primaryStartBtn.textContent = t('startQuest');
+        secondaryStartBtn.textContent = t('secondaryCam');
+        secondaryStartBtn.style.display = 'block';
+        primaryStartBtn.onclick = () => startWebXRMode(primaryStartBtn);
+        secondaryStartBtn.onclick = () => startDesktopCameraMode(secondaryStartBtn);
+        actionBtn.textContent = isCameraRunning ? t('btnStopCam') : t('startQuest');
+      } else if (isMobilePhone) {
+        deviceBadge.className = 'badge-pill mobile';
+        deviceBadge.innerHTML = `<span>${t('badgeMobile')}</span>`;
+        noticeDesc.innerHTML = t('noticeMobile');
+        primaryStartBtn.textContent = t('startCamera');
+        primaryStartBtn.onclick = () => startDesktopCameraMode(primaryStartBtn);
+        actionBtn.textContent = isCameraRunning ? t('btnStopCam') : t('btnStartCam');
+      } else {
+        deviceBadge.className = 'badge-pill desktop';
+        deviceBadge.innerHTML = `<span>${t('badgeDesktop')}</span>`;
+        noticeDesc.innerHTML = t('noticeDesktop');
+        primaryStartBtn.textContent = t('startCamera');
+        primaryStartBtn.onclick = () => startDesktopCameraMode(primaryStartBtn);
+        actionBtn.textContent = isCameraRunning ? t('btnStopCam') : t('btnStartCam');
+      }
+    }
+
+    statusEl.textContent = t('loadingAI');
+    setBtnLoading(primaryStartBtn, true, t('loadingAI'));
 
     cocoSsd.load().then(model => {
       cocoModel = model;
-      statusEl.textContent = 'AI model spreman';
+      statusEl.textContent = t('aiReady');
       setBtnLoading(primaryStartBtn, false);
 
       if (isQuestHeadset && navigator.xr && navigator.xr.isSessionSupported) {
         navigator.xr.isSessionSupported('immersive-ar').then(supported => {
           isWebXRSupported = supported;
-          if (supported) {
-            deviceBadge.className = 'badge-pill';
-            deviceBadge.innerHTML = '<span>🟢 Meta Quest 3 detektovan</span>';
-            noticeDesc.innerHTML = 'Vaš uređaj podržava <strong>WebXR AR režim</strong> sa prostornom detekcijom ravni i AI prepoznavanjem u sobi.';
-            primaryStartBtn.textContent = 'Započni Quest 3 AR mod';
-            secondaryStartBtn.textContent = 'Ili pokreni Kamera mod';
-            secondaryStartBtn.style.display = 'block';
-
-            primaryStartBtn.onclick = () => startWebXRMode(primaryStartBtn);
-            secondaryStartBtn.onclick = () => startDesktopCameraMode(secondaryStartBtn);
-            actionBtn.textContent = 'Pokreni AR';
-          } else {
-            setupCameraMode();
-          }
+          setupDeviceUI();
         }).catch(() => {
-          setupCameraMode();
+          setupDeviceUI();
         });
       } else {
-        setupCameraMode();
+        setupDeviceUI();
       }
     }).catch(e => {
-      statusEl.textContent = 'Greška pri učitavanju modela: ' + e.message;
+      statusEl.textContent = 'Error: ' + e.message;
       setBtnLoading(primaryStartBtn, false);
-      setupCameraMode();
+      setupDeviceUI();
     });
 
-    function setupCameraMode() {
-      if (isMobilePhone) {
-        deviceBadge.className = 'badge-pill mobile';
-        deviceBadge.innerHTML = '<span>📱 Mobilni telefon detektovan</span>';
-        noticeDesc.innerHTML = 'Na mobilnom telefonu koristimo <strong>kameru uređaja</strong> za AI detekciju i postavljanje 3D objekata u realnom vremenu.';
-        primaryStartBtn.textContent = 'Pokreni kameru sa AI';
-        primaryStartBtn.onclick = () => startDesktopCameraMode(primaryStartBtn);
-        actionBtn.textContent = 'Pokreni kameru';
-      } else {
-        deviceBadge.className = 'badge-pill desktop';
-        deviceBadge.innerHTML = '<span>💻 Računar / Laptop detektovan</span>';
-        noticeDesc.innerHTML = 'Puni WebXR AR režim zahteva <strong>Meta Quest 3</strong>. Na računaru pokrećemo <strong>Web kameru</strong> sa AI prepoznavanjem i 3D prikazom.';
-        primaryStartBtn.textContent = 'Pokreni Web kameru sa AI';
-        primaryStartBtn.onclick = () => startDesktopCameraMode(primaryStartBtn);
-        actionBtn.textContent = 'Pokreni kameru';
-      }
-    }
+    // Inicijalna primena jezika
+    applyLanguage(currentLang);
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
