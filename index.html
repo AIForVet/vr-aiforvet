@@ -258,9 +258,12 @@
       font-weight: 700;
       transition: all 0.2s ease;
       box-shadow: 0 10px 25px -5px rgba(0, 204, 68, 0.4);
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 14px 28px -5px rgba(0, 204, 68, 0.6);
     }
@@ -277,11 +280,40 @@
       cursor: pointer;
       font-weight: 600;
       transition: all 0.2s ease;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    .btn-secondary:hover {
+    .btn-secondary:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.16);
       transform: translateY(-1px);
+    }
+
+    /* Spinner / Wait Circle */
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255, 255, 255, 0.35);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 0.75s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .spinner-sm {
+      width: 13px;
+      height: 13px;
+      border-width: 2px;
+      margin-right: 6px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     /* Edukativni modal (Kako AI vidi svet) */
@@ -446,10 +478,11 @@
       transition: all 0.2s;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 5px;
     }
 
-    .hud-btn:hover {
+    .hud-btn:hover:not(:disabled) {
       background: #00aa33;
       transform: translateY(-1px);
     }
@@ -465,11 +498,12 @@
       font-weight: 600;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 5px;
       transition: all 0.2s;
     }
 
-    .hud-btn-alt:hover {
+    .hud-btn-alt:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.2);
       transform: translateY(-1px);
     }
@@ -695,6 +729,29 @@
     const overlayCtx = overlayCanvas.getContext('2d');
     const threeCanvas = document.getElementById('three-canvas');
 
+    // ── Pomoćna funkcija za Wait Circle (Spinner) na dugmićima ──
+    function setBtnLoading(btn, loading, text) {
+      if (!btn) return;
+      if (loading) {
+        if (!btn.dataset.origHtml) {
+          btn.dataset.origHtml = btn.innerHTML;
+        }
+        btn.disabled = true;
+        btn.style.opacity = '0.85';
+        btn.style.cursor = 'wait';
+        const isSm = btn.classList.contains('hud-btn-alt');
+        btn.innerHTML = `<span class="spinner ${isSm ? 'spinner-sm' : ''}"></span>${text || 'Učitavanje...'}`;
+      } else {
+        btn.disabled = false;
+        btn.style.opacity = '';
+        btn.style.cursor = '';
+        if (btn.dataset.origHtml) {
+          btn.innerHTML = btn.dataset.origHtml;
+          delete btn.dataset.origHtml;
+        }
+      }
+    }
+
     // ── Detekcija uređaja ───────────────────────────────────────
     const ua = navigator.userAgent || '';
     const isQuestHeadset = /OculusBrowser|Quest/i.test(ua);
@@ -706,7 +763,7 @@
     let currentSession = null;
     let placedObjects = [];
     let latestPredictions = [];
-    let currentFacingMode = 'environment'; // podrazumevano zadnja kamera
+    let currentFacingMode = 'environment';
 
     // ── Govorni odziv (Text-to-Speech) ──────────────────────────
     let isTTSEnabled = true;
@@ -1005,7 +1062,6 @@
       if (isDesktopMode) {
         drawDesktopDetections(filtered, videoSource.videoWidth, videoSource.videoHeight);
       } else {
-        // WebXR 3D markeri u prostoru
         activeLabels.forEach(({ sprite, box }) => { scene.remove(sprite); scene.remove(box); });
         activeLabels = [];
 
@@ -1040,15 +1096,12 @@
     }
 
     // ── Pokretanje Kamera moda (Desktop & Mobilni telefon) ───────
-    async function startDesktopCameraMode() {
-      isDesktopMode = true;
-      welcomeOverlay.style.opacity = '0';
-      setTimeout(() => {
-        welcomeOverlay.style.visibility = 'hidden';
-        mainUI.classList.add('visible');
-        tipOverlay.style.display = 'block';
-      }, 350);
+    async function startDesktopCameraMode(triggerBtn = null) {
+      if (triggerBtn) {
+        setBtnLoading(triggerBtn, true, 'Pokretanje kamere...');
+      }
 
+      isDesktopMode = true;
       actionBtn.textContent = 'Zaustavi kameru';
       statusEl.textContent = 'Pokretanje kamere...';
 
@@ -1067,12 +1120,18 @@
             }
           });
         } catch (e1) {
-          // Fallback na bilo koju kameru bez specifičnih rezolucija
           stream = await navigator.mediaDevices.getUserMedia({ video: true });
         }
 
         cameraFeed.srcObject = stream;
         await cameraFeed.play();
+
+        welcomeOverlay.style.opacity = '0';
+        setTimeout(() => {
+          welcomeOverlay.style.visibility = 'hidden';
+          mainUI.classList.add('visible');
+          tipOverlay.style.display = 'block';
+        }, 350);
 
         cameraFeed.style.display = 'block';
         overlayCanvas.style.display = 'block';
@@ -1101,15 +1160,21 @@
       } catch (err) {
         console.error('Kamera greska:', err);
         statusEl.textContent = 'Kamera nije dostupna: ' + err.message;
+      } finally {
+        if (triggerBtn) setBtnLoading(triggerBtn, false);
       }
     }
 
     // Prebacivanje kamere (prednja / zadnja)
     switchCamBtn.addEventListener('click', async () => {
+      setBtnLoading(switchCamBtn, true, 'Kamera...');
       currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
       if (isCameraRunning) {
         await startDesktopCameraMode();
       }
+      setTimeout(() => {
+        setBtnLoading(switchCamBtn, false);
+      }, 500);
     });
 
     // Klik/Dodir na ekranu postavlja 3D objekat u kamera modu
@@ -1130,12 +1195,10 @@
     });
 
     // ── Pokretanje WebXR AR sesije (Meta Quest 3) ───────────────
-    async function startWebXRMode() {
-      welcomeOverlay.style.opacity = '0';
-      setTimeout(() => {
-        welcomeOverlay.style.visibility = 'hidden';
-        mainUI.classList.add('visible');
-      }, 350);
+    async function startWebXRMode(triggerBtn = null) {
+      if (triggerBtn) {
+        setBtnLoading(triggerBtn, true, 'Pokretanje AR...');
+      }
 
       try {
         const session = await navigator.xr.requestSession('immersive-ar', {
@@ -1143,6 +1206,12 @@
           optionalFeatures: ['hit-test', 'plane-detection', 'dom-overlay'],
           domOverlay: { root: document.getElementById('ui') }
         });
+
+        welcomeOverlay.style.opacity = '0';
+        setTimeout(() => {
+          welcomeOverlay.style.visibility = 'hidden';
+          mainUI.classList.add('visible');
+        }, 350);
 
         currentSession = session;
         actionBtn.textContent = 'Izlaz iz AR';
@@ -1252,10 +1321,11 @@
       } catch (err) {
         console.warn('WebXR AR nije podržan, automatski prelazimo na kameru:', err);
         statusEl.textContent = 'WebXR AR nije podržan na uređaju. Pokrećem kameru...';
-        // Automatski fallback na kameru!
         setTimeout(() => {
           startDesktopCameraMode();
         }, 500);
+      } finally {
+        if (triggerBtn) setBtnLoading(triggerBtn, false);
       }
     }
 
@@ -1265,6 +1335,8 @@
         alert('Kamera mora biti pokrenuta da biste napravili snimak vežbe.');
         return;
       }
+
+      setBtnLoading(snapshotBtn, true, 'Snimam...');
 
       snapshotFlash.style.opacity = '0.8';
       setTimeout(() => { snapshotFlash.style.opacity = '0'; }, 200);
@@ -1327,13 +1399,19 @@
       link.click();
 
       speakText('Snimak vežbe je sačuvan.');
+      setTimeout(() => {
+        setBtnLoading(snapshotBtn, false);
+      }, 500);
     });
 
     // ── Dugmad i Akcije ─────────────────────────────────────────
     actionBtn.addEventListener('click', async () => {
       if (currentSession) {
+        setBtnLoading(actionBtn, true, 'Izlazim...');
         await currentSession.end();
+        setBtnLoading(actionBtn, false);
       } else if (isDesktopMode && isCameraRunning) {
+        setBtnLoading(actionBtn, true, 'Zaustavljam...');
         if (cameraFeed.srcObject) {
           cameraFeed.srcObject.getTracks().forEach(t => t.stop());
           cameraFeed.srcObject = null;
@@ -1341,14 +1419,15 @@
         isCameraRunning = false;
         cameraFeed.style.display = 'none';
         overlayCanvas.style.display = 'none';
+        setBtnLoading(actionBtn, false);
         actionBtn.textContent = 'Pokreni kameru';
         statusEl.textContent = 'Kamera zaustavljena.';
       } else if (isDesktopMode && !isCameraRunning) {
-        startDesktopCameraMode();
+        startDesktopCameraMode(actionBtn);
       } else if (isQuestHeadset) {
-        startWebXRMode();
+        startWebXRMode(actionBtn);
       } else {
-        startDesktopCameraMode();
+        startDesktopCameraMode(actionBtn);
       }
     });
 
@@ -1359,10 +1438,12 @@
 
     // ── Inicijalizacija i Provera uređaja ────────────────────────
     statusEl.textContent = 'Učitavanje AI modela...';
+    setBtnLoading(primaryStartBtn, true, 'Učitavanje AI...');
 
     cocoSsd.load().then(model => {
       cocoModel = model;
       statusEl.textContent = 'AI model spreman';
+      setBtnLoading(primaryStartBtn, false);
 
       if (isQuestHeadset && navigator.xr && navigator.xr.isSessionSupported) {
         navigator.xr.isSessionSupported('immersive-ar').then(supported => {
@@ -1375,8 +1456,8 @@
             secondaryStartBtn.textContent = 'Ili pokreni Kamera mod';
             secondaryStartBtn.style.display = 'block';
 
-            primaryStartBtn.onclick = startWebXRMode;
-            secondaryStartBtn.onclick = startDesktopCameraMode;
+            primaryStartBtn.onclick = () => startWebXRMode(primaryStartBtn);
+            secondaryStartBtn.onclick = () => startDesktopCameraMode(secondaryStartBtn);
             actionBtn.textContent = 'Pokreni AR';
           } else {
             setupCameraMode();
@@ -1389,6 +1470,7 @@
       }
     }).catch(e => {
       statusEl.textContent = 'Greška pri učitavanju modela: ' + e.message;
+      setBtnLoading(primaryStartBtn, false);
       setupCameraMode();
     });
 
@@ -1398,14 +1480,14 @@
         deviceBadge.innerHTML = '<span>📱 Mobilni telefon detektovan</span>';
         noticeDesc.innerHTML = 'Na mobilnom telefonu koristimo <strong>kameru uređaja</strong> za AI detekciju i postavljanje 3D objekata u realnom vremenu.';
         primaryStartBtn.textContent = 'Pokreni kameru sa AI';
-        primaryStartBtn.onclick = startDesktopCameraMode;
+        primaryStartBtn.onclick = () => startDesktopCameraMode(primaryStartBtn);
         actionBtn.textContent = 'Pokreni kameru';
       } else {
         deviceBadge.className = 'badge-pill desktop';
         deviceBadge.innerHTML = '<span>💻 Računar / Laptop detektovan</span>';
         noticeDesc.innerHTML = 'Puni WebXR AR režim zahteva <strong>Meta Quest 3</strong>. Na računaru pokrećemo <strong>Web kameru</strong> sa AI prepoznavanjem i 3D prikazom.';
         primaryStartBtn.textContent = 'Pokreni Web kameru sa AI';
-        primaryStartBtn.onclick = startDesktopCameraMode;
+        primaryStartBtn.onclick = () => startDesktopCameraMode(primaryStartBtn);
         actionBtn.textContent = 'Pokreni kameru';
       }
     }
